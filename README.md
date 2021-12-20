@@ -1,2 +1,2 @@
 # eazyautodelete-db-client
-Database client used by the EazyAutodelete Discord Bot
+📦 Database client used by the EazyAutodelete Discord Bot
