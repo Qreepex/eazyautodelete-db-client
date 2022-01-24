@@ -111,8 +111,8 @@ class DatabaseHandler {
                 registered: parseInt(redisData.registered),
                 prefix: redisData.prefix,
                 premium: redisData.premium,
-                adminroles: JSON.parse(redisData.adminroles),
-                modroles: JSON.parse(redisData.modroles)
+                adminroles: redisData.adminroles === "null" ? [] : redisData.adminroles.split("_"),
+                modroles: redisData.modroles === "null" ? [] : redisData.modroles.split("_")
             };
         };
 
@@ -135,8 +135,8 @@ class DatabaseHandler {
             registered: parseInt(formattedData.registered),
             prefix: formattedData.prefix,
             premium: formattedData.premium,
-            adminroles: `${formattedData.adminroles}`,
-            modroles: `${formattedData.modroles}`
+            adminroles: `${formattedData.adminroles?.length >= 1 ? formattedData.adminroles.join("_") : null}`,
+            modroles: `${formattedData.modroles?.length >= 1 ? formattedData.modroles.join("_") : null}`
         });
         return formattedData;
     }
@@ -160,8 +160,8 @@ class DatabaseHandler {
             registered: parseInt(formattedData.registered),
             prefix: formattedData.prefix,
             premium: formattedData.premium,
-            adminroles: `${formattedData.adminroles}`,
-            modroles: `${formattedData.modroles}`
+            adminroles: `${formattedData.adminroles?.length >= 1 ? formattedData.adminroles.join("_") : null}`,
+            modroles: `${formattedData.modroles?.length >= 1 ? formattedData.modroles.join("_") : null}`
         });
         return formattedData;
     };
@@ -178,8 +178,8 @@ class DatabaseHandler {
             registered: parseInt(data.registered),
             prefix: data.prefix,
             premium: data.premium,
-            adminroles: JSON.parse(data.adminroles),
-            modroles: JSON.parse(data.modroles)
+            adminroles: data.adminroles,
+            modroles: data.modroles
         };
 
         await this.deleteGuildSettings(guildId);
@@ -210,8 +210,8 @@ class DatabaseHandler {
             registered: parseInt(formattedData.registered),
             prefix: formattedData.prefix,
             premium: formattedData.premium,
-            adminroles: `${formattedData.adminroles}`,
-            modroles: `${formattedData.modroles}`
+            adminroles: `${formattedData.adminroles?.length >= 1 ? formattedData.adminroles.join("_") : null}`,
+            modroles: `${formattedData.modroles?.length >= 1 ? formattedData.modroles.join("_") : null}`
         });
     };
 
