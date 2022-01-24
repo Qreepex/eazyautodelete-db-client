@@ -216,7 +216,7 @@ class DatabaseHandler {
     };
 
     // channels
-    async getChannelSettings(channelId) {
+    async getChannelSettings(channelId, guild) {
         let redisData = await this.redis.getHashfields(`channel_${channelId}`);
         
         if(redisData?.id) {
@@ -235,7 +235,7 @@ class DatabaseHandler {
 
         let data = await this.mongo.getChannelSettings(channelId);
         if(!data) {
-            data = await this.mongo.createChannelSettings(channelId);
+            data = await this.mongo.createChannelSettings(channelId, guild);
         };
 
         let formattedData = {
