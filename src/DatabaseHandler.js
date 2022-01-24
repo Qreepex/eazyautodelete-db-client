@@ -224,7 +224,7 @@ class DatabaseHandler {
                 id: redisData.id,
                 guild: redisData.guild,
                 registered: parseInt(redisData.registered),
-                limit: parseInt(redisData.limit) === NaN ? null : parseInt(redisData.limit), // Zeit in ms oder Nachrichten Anzahl
+                limit: isNaN(parseInt(redisData.limit)) ? null : parseInt(redisData.limit), // Zeit in ms oder Nachrichten Anzahl
                 mode: parseInt(redisData.mode),
                 ignore: redisData.ignore === "null" ? [] : redisData.ignore.split("_"),
                 filters: redisData.filters === "null" ? [] : redisData.filters.split("_"),
