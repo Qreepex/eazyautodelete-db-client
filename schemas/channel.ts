@@ -1,6 +1,8 @@
 import mongoose from "mongoose";
 
-export default mongoose.model("channel", new mongoose.Schema({
+export default mongoose.model(
+  "channel",
+  new mongoose.Schema({
     id: { type: String },
     guild: { type: String },
     registered: { type: Number, default: new Date().getTime() },
@@ -9,5 +11,6 @@ export default mongoose.model("channel", new mongoose.Schema({
     ignore: { type: Array, default: [] },
     filters: { type: Array, default: [] },
     regex: { type: String, default: null },
-    filterUsage: { type: String, default: "one" }
-}));
+    filterUsage: { type: String, default: "one" },
+  })
+);
