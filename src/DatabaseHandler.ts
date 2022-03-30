@@ -1,5 +1,6 @@
 import RedisHandler from "./RedisHandler";
 import MongoHandler from "./MongoHandler";
+
 import {
   ChannelSettings,
   DatabaseHandlerConfig,
@@ -10,6 +11,7 @@ import {
   UserSettings,
   UserSettingsLanguage,
 } from "../typings";
+
 import Logger from "../utils/Logger";
 
 export default class DatabaseHandler {
@@ -97,9 +99,9 @@ export default class DatabaseHandler {
   ) {
     let data = await this.mongo.getUserSettings(userId);
     let formattedData: UserSettings = {
-      id: data.id,
-      registered: data.registered,
-      language: data.language,
+      id: data?.id,
+      registered: data?.registered,
+      language: data?.language,
     };
     if (
       formattedData.language === lang &&

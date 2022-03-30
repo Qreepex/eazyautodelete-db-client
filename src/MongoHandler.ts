@@ -36,7 +36,7 @@ class MongoHandler {
 
   // users
   async getUserSettings(userId: string): Promise<UserSettings> {
-    const data: UserSettings = await this.user.findOne({ id: userId });
+    const data = await this.user.findOne({ id: userId });
     return data;
   }
 
@@ -60,7 +60,7 @@ class MongoHandler {
 
   // guilds
   async getGuildSettings(guildId: string): Promise<GuildSettings> {
-    const data: GuildSettings = await this.guild.findOne({ id: guildId });
+    const data = await this.guild.findOne({ id: guildId });
     return data;
   }
 
@@ -90,7 +90,7 @@ class MongoHandler {
 
   // channels
   async getChannelSettings(channelId: string): Promise<ChannelSettings> {
-    const data: ChannelSettings = await this.channel.findOne({ id: channelId });
+    const data = await this.channel.findOne({ id: channelId });
     return data;
   }
 
