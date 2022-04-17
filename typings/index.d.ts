@@ -191,7 +191,7 @@ export interface ChannelSettings {
   limit: number | null; // Zeit in ms oder Nachrichten Anzahl
   mode: number;
   ignore: Array<string>;
-  filters: Array<string>;
+  filters: Array<number>;
   regex: null | RegExp;
   filterUsage: FilterUsage;
 }
