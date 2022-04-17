@@ -1,6 +1,5 @@
 import RedisHandler from "./RedisHandler";
 import MongoHandler from "./MongoHandler";
-
 import {
   ChannelSettings,
   DatabaseHandlerConfig,
@@ -11,7 +10,6 @@ import {
   UserSettings,
   UserSettingsLanguage,
 } from "../typings";
-
 import Logger from "../utils/Logger";
 
 export default class DatabaseHandler {
@@ -70,7 +68,7 @@ export default class DatabaseHandler {
     userId: string,
     lang: UserSettingsLanguage,
     registered: number
-  ) {
+  ): Promise<UserSettings> {
     await this.deleteUserSettings(userId);
 
     let data = await this.mongo.createUserSettings(userId, lang, registered);
@@ -96,7 +94,7 @@ export default class DatabaseHandler {
     userId: string,
     lang: UserSettingsLanguage,
     registered: number
-  ) {
+  ): Promise<UserSettings> {
     let data = await this.mongo.getUserSettings(userId);
     let formattedData: UserSettings = {
       id: data?.id,
@@ -114,12 +112,12 @@ export default class DatabaseHandler {
   }
 
   // Deletes the redis cache from an user
-  async deleteUserCache(userId: string) {
+  async deleteUserCache(userId: string): Promise<void> {
     await this.redis.deleteKey(`user_${userId}`);
   }
 
   // Updates the redis cache from an user
-  async updateUserCache(userId: string) {
+  async updateUserCache(userId: string): Promise<void> {
     let data = await this.mongo.getUserSettings(userId);
     if (!data) {
       data = await this.mongo.createUserSettings(userId);
@@ -196,7 +194,7 @@ export default class DatabaseHandler {
     premium: boolean = false,
     adminroles: Array<string> = [],
     modroles: Array<string> = []
-  ) {
+  ): Promise<GuildSettings> {
     await this.deleteGuildSettings(guildId);
 
     let data = await this.mongo.createGuildSettings(
@@ -237,7 +235,7 @@ export default class DatabaseHandler {
   }
 
   // Deletes settings from a guild
-  async deleteGuildSettings(guildId: string) {
+  async deleteGuildSettings(guildId: string): Promise<void> {
     await this.redis.deleteKey(`guild_${guildId}`);
     await this.mongo.deleteGuildSettings(guildId);
   }
@@ -250,7 +248,7 @@ export default class DatabaseHandler {
     premium: boolean = false,
     adminroles: Array<string> = [],
     modroles: Array<string> = []
-  ) {
+  ): Promise<GuildSettings> {
     let data = await this.mongo.getGuildSettings(guildId);
     let formattedData = {
       id: data.id,
@@ -272,11 +270,11 @@ export default class DatabaseHandler {
     );
   }
 
-  async deleteGuildCache(guildId: string) {
+  async deleteGuildCache(guildId: string): Promise<void> {
     await this.redis.deleteKey(`guild_${guildId}`);
   }
 
-  async updateGuildCache(guildId: string) {
+  async updateGuildCache(guildId: string): Promise<void> {
     let data = await this.mongo.getGuildSettings(guildId);
     if (!data) {
       data = await this.mongo.createGuildSettings(guildId);
@@ -310,7 +308,10 @@ export default class DatabaseHandler {
   }
 
   // channels
-  async getChannelSettings(channelId: string, guild: string) {
+  async getChannelSettings(
+    channelId: string,
+    guild: string
+  ): Promise<ChannelSettings> {
     let redisData = await this.redis.getHashfields(`channel_${channelId}`);
 
     if (redisData?.id) {
@@ -425,7 +426,7 @@ export default class DatabaseHandler {
     return formattedData;
   }
 
-  async deleteChannelSettings(channelId: string) {
+  async deleteChannelSettings(channelId: string): Promise<void> {
     await this.redis.deleteKey(`channel_${channelId}`);
     await this.mongo.deleteChannelSettings(channelId);
   }
@@ -440,7 +441,7 @@ export default class DatabaseHandler {
     filters: Array<FilterType> = [],
     regex: RegExp | null = null,
     filterUsage: FilterUsage = "one"
-  ) {
+  ): Promise<ChannelSettings> {
     let data = await this.mongo.getChannelSettings(channelId);
     let formattedData = {
       id: data.id,
@@ -468,11 +469,11 @@ export default class DatabaseHandler {
     );
   }
 
-  async deleteChannelCache(channelId: string) {
+  async deleteChannelCache(channelId: string): Promise<void> {
     await this.redis.deleteKey(`channel_${channelId}`);
   }
 
-  async updateChannelCache(channelId: string, guild: string) {
+  async updateChannelCache(channelId: string, guild: string): Promise<void> {
     let data = await this.mongo.getChannelSettings(channelId);
     if (!data) {
       data = await this.mongo.createChannelSettings(channelId, guild);

@@ -1,6 +1,6 @@
 {
   "name": "@eazyautodelete/eazyautodelete-db-client",
-  "version": "1.1.1",
+  "version": "1.1.4",
   "description": "Database client used by the EazyAutodelete Discord Bot,",
   "main": "build/index.js",
   "scripts": {
@@ -8,7 +8,9 @@
   },
   "files": [
     "build/*.js",
-    "build/**/*.js"
+    "build/**/*.js",
+    "build/*.d.ts",
+    "build/**/*.d.ts"
   ],
   "repository": {
     "type": "git",
@@ -17,7 +19,7 @@
   "keywords": [
     "database"
   ],
-  "typings": "build/typings/index.d.ts",
+  "typings": "build/index.d.ts",
   "author": {
     "email": "dev@qreepex.xyz",
     "name": "qreepex",
