@@ -243,11 +243,19 @@ export default class DatabaseHandler {
   // Updates settings from a guild
   async updateGuildSettings(
     guildId: string,
-    registered: number = new Date().getTime(),
-    prefix: string = "%",
-    premium: boolean = false,
-    adminroles: Array<string> = [],
-    modroles: Array<string> = []
+    {
+      registered = new Date().getTime(),
+      prefix = "%",
+      premium = false,
+      adminroles = [],
+      modroles = [],
+    }: {
+      registered?: number;
+      prefix?: string;
+      premium?: boolean;
+      adminroles?: Array<string>;
+      modroles?: Array<string>;
+    }
   ): Promise<GuildSettings> {
     let data = await this.mongo.getGuildSettings(guildId);
     let formattedData = {
@@ -325,7 +333,9 @@ export default class DatabaseHandler {
         mode: parseInt(redisData.mode),
         ignore: redisData.ignore === "null" ? [] : redisData.ignore.split("_"),
         filters:
-          redisData.filters === "null" ? [] : redisData.filters.split("_"),
+          redisData.filters === "null"
+            ? []
+            : redisData.filters.split("_").map((x) => parseInt(x)),
         regex: redisData.regex === "null" ? null : new RegExp(redisData.regex),
         filterUsage: redisData.filterUsage,
       };
@@ -434,13 +444,23 @@ export default class DatabaseHandler {
   async updateChannelSettings(
     channelId: string,
     guild: string,
-    registered: number = new Date().getTime(),
-    limit: number = 0,
-    mode: ModeType = 0,
-    ignore: Array<string> = [],
-    filters: Array<FilterType> = [],
-    regex: RegExp | null = null,
-    filterUsage: FilterUsage = "one"
+    {
+      registered = new Date().getTime(),
+      limit = 0,
+      mode = 0,
+      ignore = [],
+      filters = [],
+      regex = null,
+      filterUsage = "one",
+    }: {
+      registered?: number;
+      limit?: number;
+      mode?: ModeType;
+      ignore?: Array<string>;
+      filters?: Array<FilterType>;
+      regex?: RegExp | null;
+      filterUsage?: FilterUsage;
+    }
   ): Promise<ChannelSettings> {
     let data = await this.mongo.getChannelSettings(channelId);
     let formattedData = {
