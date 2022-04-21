@@ -3,12 +3,8 @@ import MongoHandler from "./MongoHandler";
 import {
   ChannelSettings,
   DatabaseHandlerConfig,
-  FilterType,
-  FilterUsage,
   GuildSettings,
-  ModeType,
   UserSettings,
-  UserSettingsLanguage,
 } from "../typings";
 import Logger from "../utils/Logger";
 
@@ -41,19 +37,17 @@ export default class DatabaseHandler {
   async getUserSettings(userId: string): Promise<UserSettings> {
     let redisData = await this.redis.getHashfields(`user_${userId}`);
     if (redisData?.id) {
-      let returnData: UserSettings = {
+      return {
         id: redisData.id,
         registered: parseInt(redisData.registered),
         language: redisData.language,
       };
-      return returnData;
     }
-    let data = await this.mongo.getUserSettings(userId);
-    if (!data) {
-      data = await this.mongo.createUserSettings(userId);
-    }
+    let data =
+      (await this.mongo.getUserSettings(userId)) ||
+      (await this.mongo.createUserSettings(userId));
 
-    let formattedData: UserSettings = {
+    let formattedData = {
       id: data.id,
       registered: data.registered,
       language: data.language,
@@ -66,21 +60,27 @@ export default class DatabaseHandler {
   // Creates settings for a user
   async createUserSettings(
     userId: string,
-    lang: UserSettingsLanguage,
-    registered: number
+    {
+      lang = "de",
+      registered = new Date().getTime(),
+    }: { lang?: string; registered?: number } = {}
   ): Promise<UserSettings> {
-    await this.deleteUserSettings(userId);
+    let data = await this.mongo.createUserSettings(userId, {
+      lang,
+      registered,
+    });
 
-    let data = await this.mongo.createUserSettings(userId, lang, registered);
+    await this.redis.setHash(`user_${userId}`, {
+      id: data.id,
+      registered: data.registered,
+      language: data.language,
+    });
 
-    let formattedData: UserSettings = {
+    return {
       id: data.id,
       registered: data.registered,
       language: data.language,
     };
-
-    await this.redis.setHash(`user_${userId}`, formattedData);
-    return formattedData;
   }
 
   // Deletes the settings from an user
@@ -92,23 +92,17 @@ export default class DatabaseHandler {
   // Updates the settings from an useer
   async updateUserSettings(
     userId: string,
-    lang: UserSettingsLanguage,
-    registered: number
+    { lang, registered }: { lang?: string; registered?: number } = {}
   ): Promise<UserSettings> {
     let data = await this.mongo.getUserSettings(userId);
-    let formattedData: UserSettings = {
-      id: data?.id,
-      registered: data?.registered,
-      language: data?.language,
-    };
-    if (
-      formattedData.language === lang &&
-      formattedData.registered === registered
-    )
-      return formattedData;
+    if (!data)
+      return await this.mongo.createUserSettings(userId, { lang, registered });
 
     await this.deleteUserSettings(userId);
-    return await this.createUserSettings(userId, lang, registered);
+    return await this.createUserSettings(userId, {
+      lang: lang || data.language,
+      registered: registered || data.registered,
+    });
   }
 
   // Deletes the redis cache from an user
@@ -118,27 +112,23 @@ export default class DatabaseHandler {
 
   // Updates the redis cache from an user
   async updateUserCache(userId: string): Promise<void> {
-    let data = await this.mongo.getUserSettings(userId);
-    if (!data) {
-      data = await this.mongo.createUserSettings(userId);
-    }
+    let data =
+      (await this.mongo.getUserSettings(userId)) ||
+      (await this.mongo.createUserSettings(userId));
 
-    let formattedData: UserSettings = {
+    await this.redis.setHash(`user_${userId}`, {
       id: data.id,
       registered: data.registered,
       language: data.language,
-    };
-
-    await this.redis.setHash(`user_${userId}`, formattedData);
+    });
   }
 
   // guilds
   // Gets the settings from a guild
   async getGuildSettings(guildId: string): Promise<GuildSettings> {
     let redisData = await this.redis.getHashfields(`guild_${guildId}`);
-
     if (redisData?.id) {
-      let returnData: GuildSettings = {
+      return {
         id: redisData.id,
         registered: parseInt(redisData.registered),
         prefix: redisData.prefix,
@@ -150,15 +140,25 @@ export default class DatabaseHandler {
         modroles:
           redisData.modroles === "null" ? [] : redisData.modroles.split("_"),
       };
-      return returnData;
     }
 
-    let data = await this.mongo.getGuildSettings(guildId);
-    if (!data) {
-      data = await this.mongo.createGuildSettings(guildId);
-    }
+    let data =
+      (await this.mongo.getGuildSettings(guildId)) ||
+      (await this.mongo.createGuildSettings(guildId));
 
-    let formattedData: GuildSettings = {
+    await this.redis.setHash(`guild_${guildId}`, {
+      id: data.id,
+      registered: data.registered,
+      prefix: data.prefix,
+      premium: data.premium,
+      adminroles: `${
+        data.adminroles?.length >= 1 ? data.adminroles.join("_") : null
+      }`,
+      modroles: `${
+        data.modroles?.length >= 1 ? data.modroles.join("_") : null
+      }`,
+    });
+    return {
       id: data.id,
       registered: data.registered,
       prefix: data.prefix,
@@ -166,47 +166,47 @@ export default class DatabaseHandler {
       adminroles: data.adminroles,
       modroles: data.modroles,
     };
-
-    await this.redis.setHash(`guild_${guildId}`, {
-      id: formattedData.id,
-      registered: formattedData.registered,
-      prefix: formattedData.prefix,
-      premium: formattedData.premium,
-      adminroles: `${
-        formattedData.adminroles?.length >= 1
-          ? formattedData.adminroles.join("_")
-          : null
-      }`,
-      modroles: `${
-        formattedData.modroles?.length >= 1
-          ? formattedData.modroles.join("_")
-          : null
-      }`,
-    });
-    return formattedData;
   }
 
   // Creates settings for a guild
   async createGuildSettings(
     guildId: string,
-    registered: number = new Date().getTime(),
-    prefix: string = "%",
-    premium: boolean = false,
-    adminroles: Array<string> = [],
-    modroles: Array<string> = []
-  ): Promise<GuildSettings> {
-    await this.deleteGuildSettings(guildId);
-
-    let data = await this.mongo.createGuildSettings(
-      guildId,
+    {
       registered,
       prefix,
       premium,
       adminroles,
-      modroles
-    );
+      modroles,
+    }: {
+      registered?: number;
+      prefix?: string;
+      premium?: boolean;
+      adminroles?: Array<string>;
+      modroles?: Array<string>;
+    }
+  ): Promise<GuildSettings> {
+    let data = await this.mongo.createGuildSettings(guildId, {
+      registered,
+      prefix,
+      premium,
+      adminroles,
+      modroles,
+    });
 
-    let formattedData = {
+    await this.redis.setHash(`guild_${guildId}`, {
+      id: data.id,
+      registered: data.registered,
+      prefix: data.prefix,
+      premium: data.premium,
+      adminroles: `${
+        data.adminroles?.length >= 1 ? data.adminroles.join("_") : null
+      }`,
+      modroles: `${
+        data.modroles?.length >= 1 ? data.modroles.join("_") : null
+      }`,
+    });
+
+    return {
       id: data.id,
       registered: data.registered,
       prefix: data.prefix,
@@ -214,24 +214,6 @@ export default class DatabaseHandler {
       adminroles: data.adminroles,
       modroles: data.modroles,
     };
-
-    await this.redis.setHash(`guild_${guildId}`, {
-      id: formattedData.id,
-      registered: formattedData.registered,
-      prefix: formattedData.prefix,
-      premium: formattedData.premium,
-      adminroles: `${
-        formattedData.adminroles?.length >= 1
-          ? formattedData.adminroles.join("_")
-          : null
-      }`,
-      modroles: `${
-        formattedData.modroles?.length >= 1
-          ? formattedData.modroles.join("_")
-          : null
-      }`,
-    });
-    return formattedData;
   }
 
   // Deletes settings from a guild
@@ -244,38 +226,38 @@ export default class DatabaseHandler {
   async updateGuildSettings(
     guildId: string,
     {
-      registered = new Date().getTime(),
-      prefix = "%",
-      premium = false,
-      adminroles = [],
-      modroles = [],
+      registered,
+      prefix,
+      premium,
+      adminroles,
+      modroles,
     }: {
       registered?: number;
       prefix?: string;
       premium?: boolean;
       adminroles?: Array<string>;
       modroles?: Array<string>;
-    }
+    } = {}
   ): Promise<GuildSettings> {
     let data = await this.mongo.getGuildSettings(guildId);
-    let formattedData = {
-      id: data.id,
-      registered: data.registered,
-      prefix: data.prefix,
-      premium: data.premium,
-      adminroles: data.adminroles,
-      modroles: data.modroles,
-    };
+    if (!data)
+      return await this.createGuildSettings(guildId, {
+        registered,
+        prefix,
+        premium,
+        adminroles,
+        modroles,
+      });
 
     await this.deleteGuildSettings(guildId);
-    return await this.createGuildSettings(
-      guildId,
-      registered || formattedData.registered,
-      prefix,
-      premium,
-      adminroles,
-      modroles
-    );
+
+    return await this.createGuildSettings(guildId, {
+      registered: registered || data.registered,
+      prefix: prefix || data.prefix,
+      premium: premium || data.premium,
+      adminroles: adminroles || data.adminroles,
+      modroles: modroles || data.modroles,
+    });
   }
 
   async deleteGuildCache(guildId: string): Promise<void> {
@@ -283,34 +265,20 @@ export default class DatabaseHandler {
   }
 
   async updateGuildCache(guildId: string): Promise<void> {
-    let data = await this.mongo.getGuildSettings(guildId);
-    if (!data) {
-      data = await this.mongo.createGuildSettings(guildId);
-    }
+    let data =
+      (await this.mongo.getGuildSettings(guildId)) ||
+      (await this.mongo.createGuildSettings(guildId));
 
-    let formattedData = {
+    await this.redis.setHash(`guild_${guildId}`, {
       id: data.id,
       registered: data.registered,
       prefix: data.prefix,
       premium: data.premium,
-      adminroles: data.adminroles,
-      modroles: data.modroles,
-    };
-
-    await this.redis.setHash(`guild_${guildId}`, {
-      id: formattedData.id,
-      registered: formattedData.registered,
-      prefix: formattedData.prefix,
-      premium: formattedData.premium,
       adminroles: `${
-        formattedData.adminroles?.length >= 1
-          ? formattedData.adminroles.join("_")
-          : null
+        data.adminroles?.length >= 1 ? data.adminroles.join("_") : null
       }`,
       modroles: `${
-        formattedData.modroles?.length >= 1
-          ? formattedData.modroles.join("_")
-          : null
+        data.modroles?.length >= 1 ? data.modroles.join("_") : null
       }`,
     });
   }
@@ -322,14 +290,12 @@ export default class DatabaseHandler {
   ): Promise<ChannelSettings> {
     let redisData = await this.redis.getHashfields(`channel_${channelId}`);
 
-    if (redisData?.id) {
-      let returnData: ChannelSettings = {
+    if (redisData?.id)
+      return {
         id: redisData.id,
         guild: redisData.guild,
         registered: parseInt(redisData.registered),
-        limit: isNaN(parseInt(redisData.limit))
-          ? null
-          : parseInt(redisData.limit), // Zeit in ms oder Nachrichten Anzahl
+        limit: isNaN(parseInt(redisData.limit)) ? 0 : parseInt(redisData.limit), // Zeit in ms oder Nachrichten Anzahl
         mode: parseInt(redisData.mode),
         ignore: redisData.ignore === "null" ? [] : redisData.ignore.split("_"),
         filters:
@@ -339,15 +305,24 @@ export default class DatabaseHandler {
         regex: redisData.regex === "null" ? null : new RegExp(redisData.regex),
         filterUsage: redisData.filterUsage,
       };
-      return returnData;
-    }
 
-    let data = await this.mongo.getChannelSettings(channelId);
-    if (!data) {
-      data = await this.mongo.createChannelSettings(channelId, guild);
-    }
+    let data =
+      (await this.mongo.getChannelSettings(channelId)) ||
+      (await this.mongo.createChannelSettings(channelId, guild));
 
-    let formattedData = {
+    await this.redis.setHash(`channel_${channelId}`, {
+      id: data.id,
+      guild: data.guild,
+      registered: data.registered,
+      limit: data.limit, // Zeit in ms oder Nachrichten Anzahl
+      mode: data.mode,
+      ignore: data.ignore.length >= 1 ? `${data.ignore.join("_")}` : "null",
+      filters: data.filters.length >= 1 ? `${data.filters.join("_")}` : "null",
+      regex: `${data.regex}`,
+      filterUsage: data.filterUsage,
+    });
+
+    return {
       id: data.id,
       guild: data.guild,
       registered: data.registered,
@@ -358,53 +333,52 @@ export default class DatabaseHandler {
       regex: data.regex,
       filterUsage: data.filterUsage,
     };
-
-    await this.redis.setHash(`channel_${channelId}`, {
-      id: formattedData.id,
-      guild: formattedData.guild,
-      registered: formattedData.registered,
-      limit: formattedData.limit, // Zeit in ms oder Nachrichten Anzahl
-      mode: formattedData.mode,
-      ignore:
-        formattedData.ignore.length >= 1
-          ? `${formattedData.ignore.join("_")}`
-          : "null",
-      filters:
-        formattedData.filters.length >= 1
-          ? `${formattedData.filters.join("_")}`
-          : "null",
-      regex: `${formattedData.regex}`,
-      filterUsage: formattedData.filterUsage,
-    });
-    return formattedData;
   }
 
   async createChannelSettings(
     channelId: string,
     guild: string,
-    registered: number = new Date().getTime(),
-    limit: number = 0,
-    mode: ModeType = 0,
-    ignore: Array<string> = [],
-    filters: Array<FilterType> = [],
-    regex: RegExp | null = null,
-    filterUsage: FilterUsage = "one"
-  ): Promise<ChannelSettings> {
-    await this.deleteChannelSettings(channelId);
-
-    let data = await this.mongo.createChannelSettings(
-      channelId,
-      guild,
+    {
       registered,
       limit,
       mode,
       ignore,
       filters,
       regex,
-      filterUsage
-    );
+      filterUsage,
+    }: {
+      registered?: number;
+      limit?: number;
+      mode?: number;
+      ignore?: Array<string>;
+      filters?: Array<number>;
+      regex?: RegExp | null;
+      filterUsage?: string;
+    } = {}
+  ): Promise<ChannelSettings> {
+    let data = await this.mongo.createChannelSettings(channelId, guild, {
+      registered,
+      limit,
+      mode,
+      ignore,
+      filters,
+      regex,
+      filterUsage,
+    });
 
-    let formattedData = {
+    await this.redis.setHash(`channel_${channelId}`, {
+      id: data.id,
+      guild: data.guild,
+      registered: data.registered,
+      limit: data.limit, // Zeit in ms oder Nachrichten Anzahl
+      mode: data.mode,
+      ignore: data.ignore.length >= 1 ? `${data.ignore.join("_")}` : null,
+      filters: data.filters.length >= 1 ? `${data.filters.join("_")}` : null,
+      regex: `${data.regex}`,
+      filterUsage: data.filterUsage,
+    });
+
+    return {
       id: data.id,
       guild: data.guild,
       registered: data.registered,
@@ -415,25 +389,6 @@ export default class DatabaseHandler {
       regex: data.regex,
       filterUsage: data.filterUsage,
     };
-
-    await this.redis.setHash(`channel_${channelId}`, {
-      id: formattedData.id,
-      guild: formattedData.guild,
-      registered: formattedData.registered,
-      limit: formattedData.limit, // Zeit in ms oder Nachrichten Anzahl
-      mode: formattedData.mode,
-      ignore:
-        formattedData.ignore.length >= 1
-          ? `${formattedData.ignore.join("_")}`
-          : null,
-      filters:
-        formattedData.filters.length >= 1
-          ? `${formattedData.filters.join("_")}`
-          : null,
-      regex: `${formattedData.regex}`,
-      filterUsage: formattedData.filterUsage,
-    });
-    return formattedData;
   }
 
   async deleteChannelSettings(channelId: string): Promise<void> {
@@ -445,48 +400,46 @@ export default class DatabaseHandler {
     channelId: string,
     guild: string,
     {
-      registered = new Date().getTime(),
-      limit = 0,
-      mode = 0,
-      ignore = [],
-      filters = [],
-      regex = null,
-      filterUsage = "one",
-    }: {
-      registered?: number;
-      limit?: number;
-      mode?: ModeType;
-      ignore?: Array<string>;
-      filters?: Array<FilterType>;
-      regex?: RegExp | null;
-      filterUsage?: FilterUsage;
-    }
-  ): Promise<ChannelSettings> {
-    let data = await this.mongo.getChannelSettings(channelId);
-    let formattedData = {
-      id: data.id,
-      guild: data.guild,
-      registered: data.registered,
-      limit: data.limit, // Zeit in ms oder Nachrichten Anzahl
-      mode: data.mode,
-      ignore: data.ignore,
-      filters: data.filters,
-      regex: data.regex,
-      filterUsage: data.filterUsage,
-    };
-
-    await this.deleteChannelSettings(channelId);
-    return await this.createChannelSettings(
-      channelId,
-      guild,
-      registered || formattedData.registered,
+      registered,
       limit,
       mode,
       ignore,
       filters,
       regex,
-      filterUsage
-    );
+      filterUsage,
+    }: {
+      registered?: number;
+      limit?: number;
+      mode?: number;
+      ignore?: Array<string>;
+      filters?: Array<number>;
+      regex?: RegExp | null;
+      filterUsage?: string;
+    }
+  ): Promise<ChannelSettings> {
+    let data = await this.mongo.getChannelSettings(channelId);
+    if (!data)
+      return await this.createChannelSettings(channelId, guild, {
+        registered,
+        limit,
+        mode,
+        ignore,
+        filters,
+        regex,
+        filterUsage,
+      });
+
+    await this.deleteChannelSettings(channelId);
+
+    return await this.createChannelSettings(channelId, guild, {
+      registered: registered || data.registered,
+      limit: limit || data.limit,
+      mode: mode || data.mode,
+      ignore: ignore || data.ignore,
+      filters: filters || data.filters,
+      regex: regex || data.regex,
+      filterUsage: filterUsage || data.filterUsage,
+    });
   }
 
   async deleteChannelCache(channelId: string): Promise<void> {
@@ -494,40 +447,20 @@ export default class DatabaseHandler {
   }
 
   async updateChannelCache(channelId: string, guild: string): Promise<void> {
-    let data = await this.mongo.getChannelSettings(channelId);
-    if (!data) {
-      data = await this.mongo.createChannelSettings(channelId, guild);
-    }
+    let data =
+      (await this.mongo.getChannelSettings(channelId)) ||
+      (await this.mongo.createChannelSettings(channelId, guild));
 
-    let formattedData = {
+    await this.redis.setHash(`channel_${channelId}`, {
       id: data.id,
       guild: data.guild,
       registered: data.registered,
-      limit: data.limit, // Zeit in ms oder Nachrichten Anzahl
+      limit: data.limit,
       mode: data.mode,
-      ignore: data.ignore,
-      filters: data.filters,
-      regex: data.regex,
+      ignore: data.ignore.length >= 1 ? `${data.ignore.join("_")}` : null,
+      filters: data.filters.length >= 1 ? `${data.filters.join("_")}` : null,
+      regex: `${data.regex}`,
       filterUsage: data.filterUsage,
-    };
-
-    await this.redis.deleteKey(`channel_${channelId}`);
-    await this.redis.setHash(`channel_${channelId}`, {
-      id: formattedData.id,
-      guild: formattedData.guild,
-      registered: formattedData.registered,
-      limit: formattedData.limit, // Zeit in ms oder Nachrichten Anzahl
-      mode: formattedData.mode,
-      ignore:
-        formattedData.ignore.length >= 1
-          ? `${formattedData.ignore.join("_")}`
-          : null,
-      filters:
-        formattedData.filters.length >= 1
-          ? `${formattedData.filters.join("_")}`
-          : null,
-      regex: `${formattedData.regex}`,
-      filterUsage: formattedData.filterUsage,
     });
   }
 }
