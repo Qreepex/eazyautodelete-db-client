@@ -7,6 +7,7 @@ import {
   UserSettings,
 } from "../typings";
 import Logger from "../utils/Logger";
+import { Collection } from "discord.js";
 
 export default class DatabaseHandler {
   connected: boolean;
@@ -49,7 +50,7 @@ export default class DatabaseHandler {
       ],
     });
 
-    return data.map((y) => y.id);
+    return data.map((y) => y.id + "_" + y.guild);
   }
 
   // user
