@@ -32,6 +32,26 @@ export default class DatabaseHandler {
     this.Logger.info("🧰 Databases connected", "DATA");
   }
 
+  // get all active channels
+  async getAllActiveChannels(): Promise<string[]> {
+    let data: Record<string, string>[] = await this.mongo.channel.find({
+      $and: [
+        {
+          mode: {
+            $in: [1, 2, 3, 4],
+          },
+        },
+        {
+          limit: {
+            $nin: [null, 0],
+          },
+        },
+      ],
+    });
+
+    return data.map((y) => y.id);
+  }
+
   // user
   // Gets settings from a user
   async getUserSettings(userId: string): Promise<UserSettings> {
