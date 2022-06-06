@@ -50,7 +50,7 @@ export default class DatabaseHandler {
       ],
     });
 
-    return data.map((y) => y.id + "_" + y.guild);
+    return data.map(y => y.id + "_" + y.guild);
   }
 
   // user
@@ -115,15 +115,14 @@ export default class DatabaseHandler {
     userId: string,
     { lang, registered }: { lang?: string; registered?: number } = {}
   ): Promise<UserSettings> {
-    let data = await this.mongo.getUserSettings(userId);
-    if (!data)
-      return await this.mongo.createUserSettings(userId, { lang, registered });
+    const data = await this.mongo.updateUserSettings(userId, { lang, registered });
+    await this.updateUserCache(userId);
 
-    await this.deleteUserSettings(userId);
-    return await this.createUserSettings(userId, {
-      lang: lang || data.language,
-      registered: registered || data.registered,
-    });
+    return {
+      id: data.id,
+      registered: data.registered,
+      language: data.language,
+    };
   }
 
   // Deletes the redis cache from an user
@@ -155,11 +154,8 @@ export default class DatabaseHandler {
         prefix: redisData.prefix,
         premium: JSON.parse(redisData.premium),
         adminroles:
-          redisData.adminroles === "null"
-            ? []
-            : redisData.adminroles.split("_"),
-        modroles:
-          redisData.modroles === "null" ? [] : redisData.modroles.split("_"),
+          redisData.adminroles === "null" ? [] : redisData.adminroles.split("_"),
+        modroles: redisData.modroles === "null" ? [] : redisData.modroles.split("_"),
       };
     }
 
@@ -172,12 +168,8 @@ export default class DatabaseHandler {
       registered: data.registered,
       prefix: data.prefix,
       premium: data.premium,
-      adminroles: `${
-        data.adminroles?.length >= 1 ? data.adminroles.join("_") : null
-      }`,
-      modroles: `${
-        data.modroles?.length >= 1 ? data.modroles.join("_") : null
-      }`,
+      adminroles: `${data.adminroles?.length >= 1 ? data.adminroles.join("_") : null}`,
+      modroles: `${data.modroles?.length >= 1 ? data.modroles.join("_") : null}`,
     });
     return {
       id: data.id,
@@ -219,12 +211,8 @@ export default class DatabaseHandler {
       registered: data.registered,
       prefix: data.prefix,
       premium: data.premium,
-      adminroles: `${
-        data.adminroles?.length >= 1 ? data.adminroles.join("_") : null
-      }`,
-      modroles: `${
-        data.modroles?.length >= 1 ? data.modroles.join("_") : null
-      }`,
+      adminroles: `${data.adminroles?.length >= 1 ? data.adminroles.join("_") : null}`,
+      modroles: `${data.modroles?.length >= 1 ? data.modroles.join("_") : null}`,
     });
 
     return {
@@ -260,25 +248,23 @@ export default class DatabaseHandler {
       modroles?: Array<string>;
     } = {}
   ): Promise<GuildSettings> {
-    let data = await this.mongo.getGuildSettings(guildId);
-    if (!data)
-      return await this.createGuildSettings(guildId, {
-        registered,
-        prefix,
-        premium,
-        adminroles,
-        modroles,
-      });
-
-    await this.deleteGuildSettings(guildId);
-
-    return await this.createGuildSettings(guildId, {
-      registered: registered || data.registered,
-      prefix: prefix || data.prefix,
-      premium: premium || data.premium,
-      adminroles: adminroles || data.adminroles,
-      modroles: modroles || data.modroles,
+    const data = await this.mongo.updateGuildSettings(guildId, {
+      registered,
+      prefix,
+      premium,
+      adminroles,
+      modroles,
     });
+    await this.updateGuildCache(guildId);
+
+    return {
+      id: data.id,
+      registered: data.registered,
+      prefix: data.prefix,
+      premium: data.premium,
+      adminroles: data.adminroles,
+      modroles: data.modroles,
+    };
   }
 
   async deleteGuildCache(guildId: string): Promise<void> {
@@ -295,20 +281,13 @@ export default class DatabaseHandler {
       registered: data.registered,
       prefix: data.prefix,
       premium: data.premium,
-      adminroles: `${
-        data.adminroles?.length >= 1 ? data.adminroles.join("_") : null
-      }`,
-      modroles: `${
-        data.modroles?.length >= 1 ? data.modroles.join("_") : null
-      }`,
+      adminroles: `${data.adminroles?.length >= 1 ? data.adminroles.join("_") : null}`,
+      modroles: `${data.modroles?.length >= 1 ? data.modroles.join("_") : null}`,
     });
   }
 
   // channels
-  async getChannelSettings(
-    channelId: string,
-    guild: string
-  ): Promise<ChannelSettings> {
+  async getChannelSettings(channelId: string, guild: string): Promise<ChannelSettings> {
     let redisData = await this.redis.getHashfields(`channel_${channelId}`);
 
     if (redisData?.id)
@@ -322,7 +301,7 @@ export default class DatabaseHandler {
         filters:
           redisData.filters === "null"
             ? []
-            : redisData.filters.split("_").map((x) => parseInt(x)),
+            : redisData.filters.split("_").map(x => parseInt(x)),
         regex: redisData.regex === "null" ? null : new RegExp(redisData.regex),
         filterUsage: redisData.filterUsage,
       };
@@ -391,7 +370,7 @@ export default class DatabaseHandler {
       id: data.id,
       guild: data.guild,
       registered: data.registered,
-      limit: data.limit, // Zeit in ms oder Nachrichten Anzahl
+      limit: data.limit,
       mode: data.mode,
       ignore: data.ignore.length >= 1 ? `${data.ignore.join("_")}` : null,
       filters: data.filters.length >= 1 ? `${data.filters.join("_")}` : null,
@@ -403,7 +382,7 @@ export default class DatabaseHandler {
       id: data.id,
       guild: data.guild,
       registered: data.registered,
-      limit: data.limit, // Zeit in ms oder Nachrichten Anzahl
+      limit: data.limit,
       mode: data.mode,
       ignore: data.ignore,
       filters: data.filters,
@@ -438,29 +417,28 @@ export default class DatabaseHandler {
       filterUsage?: string;
     }
   ): Promise<ChannelSettings> {
-    let data = await this.mongo.getChannelSettings(channelId);
-    if (!data)
-      return await this.createChannelSettings(channelId, guild, {
-        registered,
-        limit,
-        mode,
-        ignore,
-        filters,
-        regex,
-        filterUsage,
-      });
-
-    await this.deleteChannelSettings(channelId);
-
-    return await this.createChannelSettings(channelId, guild, {
-      registered: registered || data.registered,
-      limit: limit || data.limit,
-      mode: mode || data.mode,
-      ignore: ignore || data.ignore,
-      filters: filters || data.filters,
-      regex: regex || data.regex,
-      filterUsage: filterUsage || data.filterUsage,
+    const data = await this.mongo.updateChannelSettings(channelId, guild, {
+      registered,
+      limit,
+      mode,
+      ignore,
+      filters,
+      regex,
+      filterUsage,
     });
+    await this.updateChannelCache(channelId, guild);
+
+    return {
+      id: data.id,
+      guild: data.guild,
+      registered: data.registered,
+      limit: data.limit,
+      mode: data.mode,
+      ignore: data.ignore,
+      filters: data.filters,
+      regex: data.regex,
+      filterUsage: data.filterUsage,
+    };
   }
 
   async deleteChannelCache(channelId: string): Promise<void> {
