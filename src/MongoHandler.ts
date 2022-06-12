@@ -61,7 +61,7 @@ class MongoHandler {
           language: lang || data.language,
           registered: registered || data.registered,
         },
-      }
+      }, { new: true }
     );
     return {
       id: updatedData.id,
