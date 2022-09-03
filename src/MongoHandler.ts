@@ -29,6 +29,7 @@ class MongoHandler {
 
   async connect() {
     await this.mongo.connect(this.config.uri);
+    this.Logger.info("[🧰] Connected MongoDB", "DATA");
   }
 
   // users
@@ -47,7 +48,7 @@ class MongoHandler {
     userId: string,
     { lang, registered }: { lang?: string; registered?: number } = {}
   ): Promise<UserSettings> {
-    const data: UserSettings =
+    const data =
       (await this.user.findOne({ id: userId })) ||
       (await this.user.create({
         id: userId,
@@ -64,9 +65,9 @@ class MongoHandler {
       }, { new: true }
     );
     return {
-      id: updatedData.id,
-      registered: updatedData.registered,
-      language: updatedData.language,
+      id: updatedData!.id,
+      registered: updatedData!.registered,
+      language: updatedData!.language,
     };
   }
 
@@ -127,7 +128,7 @@ class MongoHandler {
       modroles?: Array<string>;
     } = {}
   ): Promise<GuildSettings> {
-    const data: GuildSettings =
+    const data =
       (await this.guild.findOne({ id: guildId })) ||
       (await this.guild.create({
         id: guildId,
@@ -151,12 +152,12 @@ class MongoHandler {
       { new: true }
     );
     return {
-      id: updatedData.id,
-      registered: updatedData.registered,
-      prefix: updatedData.prefix,
-      premium: updatedData.premium,
-      adminroles: updatedData.adminroles,
-      modroles: updatedData.modroles,
+      id: updatedData!.id,
+      registered: updatedData!.registered,
+      prefix: updatedData!.prefix,
+      premium: updatedData!.premium,
+      adminroles: updatedData!.adminroles,
+      modroles: updatedData!.modroles,
     };
   }
 
@@ -240,7 +241,7 @@ class MongoHandler {
       filterUsage?: string;
     } = {}
   ): Promise<ChannelSettings> {
-    const data: ChannelSettings =
+    const data =
       (await this.channel.findOne({ id: channelId, guild: guild })) ||
       (await this.channel.create({
         id: channelId,
@@ -269,15 +270,15 @@ class MongoHandler {
       { new: true }
     );
     return {
-      id: updatedData.id,
-      guild: updatedData.guild,
-      registered: updatedData.registered,
-      limit: updatedData.limit,
-      mode: updatedData.mode,
-      ignore: updatedData.ignore,
-      filters: updatedData.filters,
-      regex: updatedData.regex,
-      filterUsage: updatedData.filterUsage,
+      id: updatedData!.id,
+      guild: updatedData!.guild as string,
+      registered: updatedData!.registered,
+      limit: updatedData!.limit,
+      mode: updatedData!.mode,
+      ignore: updatedData!.ignore,
+      filters: updatedData!.filters,
+      regex: updatedData?.regex ? new RegExp(updatedData.regex) : null,
+      filterUsage: updatedData!.filterUsage,
     };
   }
 
@@ -313,15 +314,16 @@ class MongoHandler {
       regex: regex,
       filterUsage: filterUsage,
     });
+
     return {
       id: data.id,
-      guild: data.guild,
+      guild: data.guild as string,
       registered: data.registered,
       limit: data.limit,
       mode: data.mode,
       ignore: data.ignore,
       filters: data.filters,
-      regex: data.regex,
+      regex: data?.regex ? new RegExp(data.regex) : null,
       filterUsage: data.filterUsage,
     };
   }

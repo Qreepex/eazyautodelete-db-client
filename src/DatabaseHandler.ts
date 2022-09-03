@@ -25,12 +25,13 @@ export default class DatabaseHandler {
 
   // Connects the databases
   async connect() {
+    this.Logger.info("[🧰] Connecting Databases...", "DATA");
     await this.mongo.connect();
     await this.redis.connect();
 
     this.connected = true;
 
-    this.Logger.info("🧰 Databases connected", "DATA");
+    this.Logger.info("[🧰] Databases connected", "DATA");
   }
 
   // get all active channels
