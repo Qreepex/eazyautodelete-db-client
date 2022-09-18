@@ -1,11 +1,6 @@
 import ioredis, { Redis } from "ioredis";
-import {
-  ChannelSettings,
-  GuildSettings,
-  RedisHandlerConfig,
-  UserSettings,
-} from "../typings";
-import Logger from "../utils/Logger";
+import { ChannelSettings, GuildSettings, RedisHandlerConfig, UserSettings } from "..";
+import Logger from "@eazyautodelete/logger";
 
 export default class RedisHandler {
   config: RedisHandlerConfig;
@@ -34,13 +29,9 @@ export default class RedisHandler {
     return data;
   }
 
-  async setHash(
-    key: string,
-    data: UserSettings | ChannelSettings | GuildSettings | any
-  ): Promise<void> {
+  async setHash(key: string, data: UserSettings | ChannelSettings | GuildSettings | any): Promise<void> {
     const fields = Object.keys(data);
-    if (fields.length > 1)
-      await this.redis.hmset(key, ...fields.map(field => [field, data[field]]).flat());
+    if (fields.length > 1) await this.redis.hmset(key, ...fields.map(field => [field, data[field]]).flat());
     else await this.redis.hset(key, fields[0], data[fields[0]]);
   }
 

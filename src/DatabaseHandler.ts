@@ -1,13 +1,7 @@
 import RedisHandler from "./RedisHandler";
 import MongoHandler from "./MongoHandler";
-import {
-  ChannelSettings,
-  DatabaseHandlerConfig,
-  GuildSettings,
-  UserSettings,
-} from "../typings";
-import Logger from "../utils/Logger";
-import { Collection } from "discord.js";
+import { ChannelSettings, DatabaseHandlerConfig, GuildSettings, UserSettings } from "..";
+import Logger from "@eazyautodelete/logger";
 
 export default class DatabaseHandler {
   connected: boolean;
@@ -65,9 +59,7 @@ export default class DatabaseHandler {
         language: redisData.language,
       };
     }
-    let data =
-      (await this.mongo.getUserSettings(userId)) ||
-      (await this.mongo.createUserSettings(userId));
+    let data = (await this.mongo.getUserSettings(userId)) || (await this.mongo.createUserSettings(userId));
 
     let formattedData = {
       id: data.id,
@@ -82,10 +74,7 @@ export default class DatabaseHandler {
   // Creates settings for a user
   async createUserSettings(
     userId: string,
-    {
-      lang = "de",
-      registered = new Date().getTime(),
-    }: { lang?: string; registered?: number } = {}
+    { lang = "de", registered = new Date().getTime() }: { lang?: string; registered?: number } = {}
   ): Promise<UserSettings> {
     let data = await this.mongo.createUserSettings(userId, {
       lang,
@@ -133,9 +122,7 @@ export default class DatabaseHandler {
 
   // Updates the redis cache from an user
   async updateUserCache(userId: string): Promise<void> {
-    let data =
-      (await this.mongo.getUserSettings(userId)) ||
-      (await this.mongo.createUserSettings(userId));
+    let data = (await this.mongo.getUserSettings(userId)) || (await this.mongo.createUserSettings(userId));
 
     await this.redis.setHash(`user_${userId}`, {
       id: data.id,
@@ -154,15 +141,12 @@ export default class DatabaseHandler {
         registered: parseInt(redisData.registered),
         prefix: redisData.prefix,
         premium: JSON.parse(redisData.premium),
-        adminroles:
-          redisData.adminroles === "null" ? [] : redisData.adminroles.split("_"),
+        adminroles: redisData.adminroles === "null" ? [] : redisData.adminroles.split("_"),
         modroles: redisData.modroles === "null" ? [] : redisData.modroles.split("_"),
       };
     }
 
-    let data =
-      (await this.mongo.getGuildSettings(guildId)) ||
-      (await this.mongo.createGuildSettings(guildId));
+    let data = (await this.mongo.getGuildSettings(guildId)) || (await this.mongo.createGuildSettings(guildId));
 
     await this.redis.setHash(`guild_${guildId}`, {
       id: data.id,
@@ -273,9 +257,7 @@ export default class DatabaseHandler {
   }
 
   async updateGuildCache(guildId: string): Promise<void> {
-    let data =
-      (await this.mongo.getGuildSettings(guildId)) ||
-      (await this.mongo.createGuildSettings(guildId));
+    let data = (await this.mongo.getGuildSettings(guildId)) || (await this.mongo.createGuildSettings(guildId));
 
     await this.redis.setHash(`guild_${guildId}`, {
       id: data.id,
@@ -299,17 +281,13 @@ export default class DatabaseHandler {
         limit: isNaN(parseInt(redisData.limit)) ? 0 : parseInt(redisData.limit), // Zeit in ms oder Nachrichten Anzahl
         mode: parseInt(redisData.mode),
         ignore: redisData.ignore === "null" ? [] : redisData.ignore.split("_"),
-        filters:
-          redisData.filters === "null"
-            ? []
-            : redisData.filters.split("_").map(x => parseInt(x)),
+        filters: redisData.filters === "null" ? [] : redisData.filters.split("_").map(x => parseInt(x)),
         regex: redisData.regex === "null" ? null : new RegExp(redisData.regex),
         filterUsage: redisData.filterUsage,
       };
 
     let data =
-      (await this.mongo.getChannelSettings(channelId)) ||
-      (await this.mongo.createChannelSettings(channelId, guild));
+      (await this.mongo.getChannelSettings(channelId)) || (await this.mongo.createChannelSettings(channelId, guild));
 
     await this.redis.setHash(`channel_${channelId}`, {
       id: data.id,
@@ -448,8 +426,7 @@ export default class DatabaseHandler {
 
   async updateChannelCache(channelId: string, guild: string): Promise<void> {
     let data =
-      (await this.mongo.getChannelSettings(channelId)) ||
-      (await this.mongo.createChannelSettings(channelId, guild));
+      (await this.mongo.getChannelSettings(channelId)) || (await this.mongo.createChannelSettings(channelId, guild));
 
     await this.redis.setHash(`channel_${channelId}`, {
       id: data.id,

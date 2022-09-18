@@ -1,15 +1,9 @@
-import mongoose, { Mongoose } from "mongoose";
-import {
-  ChannelSettings,
-  GuildSettings,
-  MongoHandlerConfig,
-  UserSettings,
-} from "../typings";
-import Logger from "../utils/Logger";
+import mongoose from "mongoose";
+import { ChannelSettings, GuildSettings, MongoHandlerConfig, UserSettings } from "..";
+import Logger from "@eazyautodelete/logger";
 import guild from "../schemas/guild";
 import channel from "../schemas/channel";
 import user from "../schemas/user";
-import { DataManager } from "discord.js";
 
 class MongoHandler {
   mongo: typeof mongoose;
@@ -62,7 +56,8 @@ class MongoHandler {
           language: lang || data.language,
           registered: registered || data.registered,
         },
-      }, { new: true }
+      },
+      { new: true }
     );
     return {
       id: updatedData!.id,
@@ -73,10 +68,7 @@ class MongoHandler {
 
   async createUserSettings(
     userId: string,
-    {
-      lang = "en",
-      registered = new Date().getTime(),
-    }: { lang?: string; registered?: number } = {}
+    { lang = "en", registered = new Date().getTime() }: { lang?: string; registered?: number } = {}
   ): Promise<UserSettings> {
     const data = await this.user.create({
       id: userId,
