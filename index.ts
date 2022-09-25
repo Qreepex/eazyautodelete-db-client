@@ -42,6 +42,8 @@ export interface ChannelSettings {
   filters: Array<number>;
   regex: null | RegExp;
   filterUsage: string;
+  before: string | null;
+  after: string | null;
 }
 
 export interface GuildSettings {

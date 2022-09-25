@@ -12,5 +12,7 @@ export default mongoose.model(
     filters: { type: Array, default: [] },
     regex: { type: String, default: null },
     filterUsage: { type: String, default: "one" },
+    after: { type: String, default: null },
+    before: { type: String, default: null },
   })
 );

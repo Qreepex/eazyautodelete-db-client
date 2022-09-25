@@ -284,6 +284,8 @@ export default class DatabaseHandler {
         filters: redisData.filters === "null" ? [] : redisData.filters.split("_").map(x => parseInt(x)),
         regex: redisData.regex === "null" ? null : new RegExp(redisData.regex),
         filterUsage: redisData.filterUsage,
+        after: redisData.after === "null" ? null : redisData.after,
+        before: redisData.before === "null" ? null : redisData.before,
       };
 
     let data =
@@ -299,6 +301,8 @@ export default class DatabaseHandler {
       filters: data.filters.length >= 1 ? `${data.filters.join("_")}` : "null",
       regex: `${data.regex}`,
       filterUsage: data.filterUsage,
+      after: data.after || "null",
+      before: data.before || "null",
     });
 
     return {
@@ -311,6 +315,8 @@ export default class DatabaseHandler {
       filters: data.filters,
       regex: data.regex,
       filterUsage: data.filterUsage,
+      after: data.after,
+      before: data.before,
     };
   }
 
@@ -325,6 +331,8 @@ export default class DatabaseHandler {
       filters,
       regex,
       filterUsage,
+      after,
+      before,
     }: {
       registered?: number;
       limit?: number;
@@ -333,6 +341,8 @@ export default class DatabaseHandler {
       filters?: Array<number>;
       regex?: RegExp | null;
       filterUsage?: string;
+      after?: string | null;
+      before?: string | null;
     } = {}
   ): Promise<ChannelSettings> {
     let data = await this.mongo.createChannelSettings(channelId, guild, {
@@ -343,6 +353,8 @@ export default class DatabaseHandler {
       filters,
       regex,
       filterUsage,
+      after,
+      before,
     });
 
     await this.redis.setHash(`channel_${channelId}`, {
@@ -355,6 +367,8 @@ export default class DatabaseHandler {
       filters: data.filters.length >= 1 ? `${data.filters.join("_")}` : null,
       regex: `${data.regex}`,
       filterUsage: data.filterUsage,
+      after: after || "null",
+      before: after || "null",
     });
 
     return {
@@ -367,6 +381,8 @@ export default class DatabaseHandler {
       filters: data.filters,
       regex: data.regex,
       filterUsage: data.filterUsage,
+      after: data.after,
+      before: data.before,
     };
   }
 
@@ -386,6 +402,8 @@ export default class DatabaseHandler {
       filters,
       regex,
       filterUsage,
+      after,
+      before,
     }: {
       registered?: number;
       limit?: number;
@@ -394,6 +412,8 @@ export default class DatabaseHandler {
       filters?: Array<number>;
       regex?: RegExp | null;
       filterUsage?: string;
+      after?: string | null;
+      before?: string | null;
     }
   ): Promise<ChannelSettings> {
     const data = await this.mongo.updateChannelSettings(channelId, guild, {
@@ -404,6 +424,8 @@ export default class DatabaseHandler {
       filters,
       regex,
       filterUsage,
+      after,
+      before,
     });
     await this.updateChannelCache(channelId, guild);
 
@@ -417,6 +439,8 @@ export default class DatabaseHandler {
       filters: data.filters,
       regex: data.regex,
       filterUsage: data.filterUsage,
+      after: data.after,
+      before: data.before,
     };
   }
 
@@ -438,6 +462,8 @@ export default class DatabaseHandler {
       filters: data.filters.length >= 1 ? `${data.filters.join("_")}` : null,
       regex: `${data.regex}`,
       filterUsage: data.filterUsage,
+      after: data.after || "null",
+      before: data.before || "null",
     });
   }
 }

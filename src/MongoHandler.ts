@@ -208,6 +208,8 @@ class MongoHandler {
           filters: data.filters,
           regex: data.regex,
           filterUsage: data.filterUsage,
+          after: data.after,
+          before: data.before,
         }
       : null;
   }
@@ -223,6 +225,8 @@ class MongoHandler {
       filters,
       regex,
       filterUsage,
+      after,
+      before,
     }: {
       registered?: number;
       limit?: number;
@@ -231,6 +235,8 @@ class MongoHandler {
       filters?: Array<number>;
       regex?: RegExp | null;
       filterUsage?: string;
+      after?: string | null;
+      before?: string | null;
     } = {}
   ): Promise<ChannelSettings> {
     const data =
@@ -245,18 +251,22 @@ class MongoHandler {
         filters: filters,
         regex: regex,
         filterUsage: filterUsage,
+        after: after,
+        before: before,
       }));
     const updatedData = await this.channel.findOneAndUpdate(
       { id: channelId, guild: guild },
       {
         $set: {
           registered: registered || data.registered,
-          limit: limit || data.limit,
-          mode: mode || data.mode,
+          limit: limit === undefined ? data.limit : limit,
+          mode: mode === undefined ? data.mode : mode,
           ignore: ignore || data.ignore,
           filters: filters || data.filters,
           regex: regex || data.regex,
           filterUsage: filterUsage || data.filterUsage,
+          after: after === undefined ? data.after : after,
+          before: before === undefined ? data.before : before,
         },
       },
       { new: true }
@@ -271,6 +281,8 @@ class MongoHandler {
       filters: updatedData!.filters,
       regex: updatedData?.regex ? new RegExp(updatedData.regex) : null,
       filterUsage: updatedData!.filterUsage,
+      after: updatedData!.after,
+      before: updatedData!.before,
     };
   }
 
@@ -285,6 +297,8 @@ class MongoHandler {
       filters = [],
       regex = null,
       filterUsage = "one",
+      after = null,
+      before = null,
     }: {
       registered?: number;
       limit?: number;
@@ -293,6 +307,8 @@ class MongoHandler {
       filters?: Array<number>;
       regex?: RegExp | null;
       filterUsage?: string;
+      after?: string | null;
+      before?: string | null;
     } = {}
   ): Promise<ChannelSettings> {
     const data = await this.channel.create({
@@ -305,6 +321,8 @@ class MongoHandler {
       filters: filters,
       regex: regex,
       filterUsage: filterUsage,
+      after: after,
+      before: before,
     });
 
     return {
@@ -317,6 +335,8 @@ class MongoHandler {
       filters: data.filters,
       regex: data?.regex ? new RegExp(data.regex) : null,
       filterUsage: data.filterUsage,
+      after: data.after,
+      before: data.before,
     };
   }
 
