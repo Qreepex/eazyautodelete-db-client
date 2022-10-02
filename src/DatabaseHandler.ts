@@ -71,10 +71,32 @@ export default class DatabaseHandler {
     return formattedData;
   }
 
+  async getUserSettingsNoCreate(userId: string): Promise<UserSettings | null> {
+    let redisData = await this.redis.getHashfields(`user_${userId}`);
+    if (redisData?.id) {
+      return {
+        id: redisData.id,
+        registered: parseInt(redisData.registered),
+        language: redisData.language,
+      };
+    }
+    let data = await this.mongo.getUserSettings(userId);
+    if (!data) return null;
+
+    let formattedData = {
+      id: data.id,
+      registered: data.registered,
+      language: data.language,
+    };
+
+    await this.redis.setHash(`user_${userId}`, formattedData);
+    return formattedData;
+  }
+
   // Creates settings for a user
   async createUserSettings(
     userId: string,
-    { lang = "de", registered = new Date().getTime() }: { lang?: string; registered?: number } = {}
+    { lang = "en", registered = new Date().getTime() }: { lang?: string; registered?: number } = {}
   ): Promise<UserSettings> {
     let data = await this.mongo.createUserSettings(userId, {
       lang,
@@ -147,6 +169,40 @@ export default class DatabaseHandler {
     }
 
     let data = (await this.mongo.getGuildSettings(guildId)) || (await this.mongo.createGuildSettings(guildId));
+
+    await this.redis.setHash(`guild_${guildId}`, {
+      id: data.id,
+      registered: data.registered,
+      prefix: data.prefix,
+      premium: data.premium,
+      adminroles: `${data.adminroles?.length >= 1 ? data.adminroles.join("_") : null}`,
+      modroles: `${data.modroles?.length >= 1 ? data.modroles.join("_") : null}`,
+    });
+    return {
+      id: data.id,
+      registered: data.registered,
+      prefix: data.prefix,
+      premium: data.premium,
+      adminroles: data.adminroles,
+      modroles: data.modroles,
+    };
+  }
+
+  async getGuildSettingsNoCreate(guildId: string): Promise<GuildSettings | null> {
+    let redisData = await this.redis.getHashfields(`guild_${guildId}`);
+    if (redisData?.id) {
+      return {
+        id: redisData.id,
+        registered: parseInt(redisData.registered),
+        prefix: redisData.prefix,
+        premium: JSON.parse(redisData.premium),
+        adminroles: redisData.adminroles === "null" ? [] : redisData.adminroles.split("_"),
+        modroles: redisData.modroles === "null" ? [] : redisData.modroles.split("_"),
+      };
+    }
+
+    let data = await this.mongo.getGuildSettings(guildId);
+    if (!data) return null;
 
     await this.redis.setHash(`guild_${guildId}`, {
       id: data.id,
@@ -290,6 +346,56 @@ export default class DatabaseHandler {
 
     let data =
       (await this.mongo.getChannelSettings(channelId)) || (await this.mongo.createChannelSettings(channelId, guild));
+
+    await this.redis.setHash(`channel_${channelId}`, {
+      id: data.id,
+      guild: data.guild,
+      registered: data.registered,
+      limit: data.limit, // Zeit in ms oder Nachrichten Anzahl
+      mode: data.mode,
+      ignore: data.ignore.length >= 1 ? `${data.ignore.join("_")}` : "null",
+      filters: data.filters.length >= 1 ? `${data.filters.join("_")}` : "null",
+      regex: `${data.regex}`,
+      filterUsage: data.filterUsage,
+      after: data.after || "null",
+      before: data.before || "null",
+    });
+
+    return {
+      id: data.id,
+      guild: data.guild,
+      registered: data.registered,
+      limit: data.limit, // Zeit in ms oder Nachrichten Anzahl
+      mode: data.mode,
+      ignore: data.ignore,
+      filters: data.filters,
+      regex: data.regex,
+      filterUsage: data.filterUsage,
+      after: data.after,
+      before: data.before,
+    };
+  }
+
+  async getChannelSettingsNoCreate(channelId: string, guild: string): Promise<ChannelSettings | null> {
+    let redisData = await this.redis.getHashfields(`channel_${channelId}`);
+
+    if (redisData?.id)
+      return {
+        id: redisData.id,
+        guild: redisData.guild,
+        registered: parseInt(redisData.registered),
+        limit: isNaN(parseInt(redisData.limit)) ? 0 : parseInt(redisData.limit), // Zeit in ms oder Nachrichten Anzahl
+        mode: parseInt(redisData.mode),
+        ignore: redisData.ignore === "null" ? [] : redisData.ignore.split("_"),
+        filters: redisData.filters === "null" ? [] : redisData.filters.split("_").map(x => parseInt(x)),
+        regex: redisData.regex === "null" ? null : new RegExp(redisData.regex),
+        filterUsage: redisData.filterUsage,
+        after: redisData.after === "null" ? null : redisData.after,
+        before: redisData.before === "null" ? null : redisData.before,
+      };
+
+    let data = await this.mongo.getChannelSettings(channelId);
+    if (!data) return null;
 
     await this.redis.setHash(`channel_${channelId}`, {
       id: data.id,
