@@ -103,6 +103,8 @@
     "build",
     "build/**",
     "*.d.ts",
-    "build"
+    "build",
+    "*.d.ts",
+    "*.js",
   ]
 }

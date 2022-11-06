@@ -334,10 +334,18 @@ export default class DatabaseHandler {
         id: redisData.id,
         guild: redisData.guild,
         registered: parseInt(redisData.registered),
-        limit: isNaN(parseInt(redisData.limit)) ? 0 : parseInt(redisData.limit), // Zeit in ms oder Nachrichten Anzahl
+        limit: parseInt(redisData.limit) || 0, // Zeit in ms oder Nachrichten Anzahl
         mode: parseInt(redisData.mode),
         ignore: redisData.ignore === "null" ? [] : redisData.ignore.split("_"),
-        filters: redisData.filters === "null" ? [] : redisData.filters.split("_").map(x => parseInt(x)),
+        filters:
+          redisData.filters === "null"
+            ? []
+            : redisData.filters.split("_").length >= 1
+            ? redisData.filters
+                .split("_")
+                .filter(x => parseInt(x))
+                .map(x => parseInt(x))
+            : [],
         regex: redisData.regex === "null" ? null : new RegExp(redisData.regex),
         filterUsage: redisData.filterUsage,
         after: redisData.after === "null" ? null : redisData.after,
@@ -387,7 +395,15 @@ export default class DatabaseHandler {
         limit: isNaN(parseInt(redisData.limit)) ? 0 : parseInt(redisData.limit), // Zeit in ms oder Nachrichten Anzahl
         mode: parseInt(redisData.mode),
         ignore: redisData.ignore === "null" ? [] : redisData.ignore.split("_"),
-        filters: redisData.filters === "null" ? [] : redisData.filters.split("_").map(x => parseInt(x)),
+        filters:
+          redisData.filters === "null"
+            ? []
+            : redisData.filters.split("_").length >= 1
+            ? redisData.filters
+                .split("_")
+                .filter(x => parseInt(x))
+                .map(x => parseInt(x))
+            : [],
         regex: redisData.regex === "null" ? null : new RegExp(redisData.regex),
         filterUsage: redisData.filterUsage,
         after: redisData.after === "null" ? null : redisData.after,
