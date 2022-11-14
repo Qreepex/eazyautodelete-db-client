@@ -30,6 +30,7 @@ export interface UserSettings {
   id: string;
   registered: number;
   language: string;
+  isNew?: boolean;
 }
 
 export interface ChannelSettings {

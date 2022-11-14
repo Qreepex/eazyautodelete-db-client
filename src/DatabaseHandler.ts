@@ -65,6 +65,7 @@ export default class DatabaseHandler {
       id: data.id,
       registered: data.registered,
       language: data.language,
+      isNew: data.isNew || false,
     };
 
     await this.redis.setHash(`user_${userId}`, formattedData);
@@ -113,6 +114,7 @@ export default class DatabaseHandler {
       id: data.id,
       registered: data.registered,
       language: data.language,
+      isNew: true,
     };
   }
 
@@ -336,7 +338,8 @@ export default class DatabaseHandler {
         registered: parseInt(redisData.registered),
         limit: parseInt(redisData.limit) || 0, // Zeit in ms oder Nachrichten Anzahl
         mode: parseInt(redisData.mode),
-        ignore: redisData.ignore === "null" ? [] : redisData.ignore.split("_"),
+        ignore:
+          redisData.ignore === "null" ? [] : redisData.ignore.split("_").length >= 1 ? redisData.ignore.split("_") : [],
         filters:
           redisData.filters === "null"
             ? []
@@ -394,7 +397,8 @@ export default class DatabaseHandler {
         registered: parseInt(redisData.registered),
         limit: isNaN(parseInt(redisData.limit)) ? 0 : parseInt(redisData.limit), // Zeit in ms oder Nachrichten Anzahl
         mode: parseInt(redisData.mode),
-        ignore: redisData.ignore === "null" ? [] : redisData.ignore.split("_"),
+        ignore:
+          redisData.ignore === "null" ? [] : redisData.ignore.split("_").length >= 1 ? redisData.ignore.split("_") : [],
         filters:
           redisData.filters === "null"
             ? []
