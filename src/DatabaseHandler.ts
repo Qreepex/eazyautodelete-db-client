@@ -65,11 +65,10 @@ export default class DatabaseHandler {
       id: data.id,
       registered: data.registered,
       language: data.language,
-      isNew: data.isNew || false,
     };
 
     await this.redis.setHash(`user_${userId}`, formattedData);
-    return formattedData;
+    return { ...formattedData, isNew: true };
   }
 
   async getUserSettingsNoCreate(userId: string): Promise<UserSettings | null> {
@@ -177,8 +176,8 @@ export default class DatabaseHandler {
       registered: data.registered,
       prefix: data.prefix,
       premium: data.premium,
-      adminroles: `${data.adminroles?.length >= 1 ? data.adminroles.join("_") : null}`,
-      modroles: `${data.modroles?.length >= 1 ? data.modroles.join("_") : null}`,
+      adminroles: data.adminroles?.length >= 1 ? data.adminroles.join("_") : "null",
+      modroles: data.modroles?.length >= 1 ? data.modroles.join("_") : "null",
     });
     return {
       id: data.id,
@@ -211,8 +210,8 @@ export default class DatabaseHandler {
       registered: data.registered,
       prefix: data.prefix,
       premium: data.premium,
-      adminroles: `${data.adminroles?.length >= 1 ? data.adminroles.join("_") : null}`,
-      modroles: `${data.modroles?.length >= 1 ? data.modroles.join("_") : null}`,
+      adminroles: data.adminroles?.length >= 1 ? data.adminroles.join("_") : "null",
+      modroles: data.modroles?.length >= 1 ? data.modroles.join("_") : "null",
     });
     return {
       id: data.id,
@@ -254,8 +253,8 @@ export default class DatabaseHandler {
       registered: data.registered,
       prefix: data.prefix,
       premium: data.premium,
-      adminroles: `${data.adminroles?.length >= 1 ? data.adminroles.join("_") : null}`,
-      modroles: `${data.modroles?.length >= 1 ? data.modroles.join("_") : null}`,
+      adminroles: data.adminroles?.length >= 1 ? data.adminroles.join("_") : "null",
+      modroles: data.modroles?.length >= 1 ? data.modroles.join("_") : "null",
     });
 
     return {
@@ -322,8 +321,8 @@ export default class DatabaseHandler {
       registered: data.registered,
       prefix: data.prefix,
       premium: data.premium,
-      adminroles: `${data.adminroles?.length >= 1 ? data.adminroles.join("_") : null}`,
-      modroles: `${data.modroles?.length >= 1 ? data.modroles.join("_") : null}`,
+      adminroles: data.adminroles?.length >= 1 ? data.adminroles.join("_") : "null",
+      modroles: data.modroles?.length >= 1 ? data.modroles.join("_") : "null",
     });
   }
 
@@ -489,8 +488,8 @@ export default class DatabaseHandler {
       registered: data.registered,
       limit: data.limit,
       mode: data.mode,
-      ignore: data.ignore.length >= 1 ? `${data.ignore.join("_")}` : null,
-      filters: data.filters.length >= 1 ? `${data.filters.join("_")}` : null,
+      ignore: data.ignore.length >= 1 ? `${data.ignore.join("_")}` : "null",
+      filters: data.filters.length >= 1 ? `${data.filters.join("_")}` : "null",
       regex: `${data.regex}`,
       filterUsage: data.filterUsage,
       after: after || "null",
@@ -584,8 +583,8 @@ export default class DatabaseHandler {
       registered: data.registered,
       limit: data.limit,
       mode: data.mode,
-      ignore: data.ignore.length >= 1 ? `${data.ignore.join("_")}` : null,
-      filters: data.filters.length >= 1 ? `${data.filters.join("_")}` : null,
+      ignore: data.ignore.length >= 1 ? `${data.ignore.join("_")}` : "null",
+      filters: data.filters.length >= 1 ? `${data.filters.join("_")}` : "null",
       regex: `${data.regex}`,
       filterUsage: data.filterUsage,
       after: data.after || "null",
