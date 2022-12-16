@@ -43,5 +43,9 @@
     "commitizen": "^4.2.5",
     "prettier": "^2.6.1",
     "standard-version": "^9.5.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://npm.pkg.github.com/"
   }
 }

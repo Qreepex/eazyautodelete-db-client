@@ -16,7 +16,6 @@ export default class RedisHandler {
     this.redis = new ioredis(this.config.port, this.config.host, {
       password: this.config.password,
     });
-    this.Logger.info("[🧰] Connected Redis", "DATA");
   }
 
   async getKey(key: string): Promise<string | null> {
