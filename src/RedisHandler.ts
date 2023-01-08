@@ -28,6 +28,7 @@ export default class RedisHandler {
     return data;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async setHash(key: string, data: UserSettings | ChannelSettings | GuildSettings | any): Promise<void> {
     const fields = Object.keys(data);
     if (fields.length > 1) await this.redis.hmset(key, ...fields.map(field => [field, data[field]]).flat());

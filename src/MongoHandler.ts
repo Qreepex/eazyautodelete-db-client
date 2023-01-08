@@ -23,7 +23,6 @@ class MongoHandler {
 
   async connect() {
     await this.mongo.connect(this.config.uri);
-    this.Logger.info("[🧰] Connected MongoDB", "DATA");
   }
 
   // users
@@ -60,8 +59,11 @@ class MongoHandler {
       { new: true }
     );
     return {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       id: updatedData!.id,
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       registered: updatedData!.registered,
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       language: updatedData!.language,
     };
   }
@@ -144,6 +146,7 @@ class MongoHandler {
       { new: true }
     );
     return {
+      /* eslint-disable @typescript-eslint/no-non-null-assertion */
       id: updatedData!.id,
       registered: updatedData!.registered,
       prefix: updatedData!.prefix,
@@ -272,6 +275,7 @@ class MongoHandler {
       { new: true }
     );
     return {
+      /* eslint-disable @typescript-eslint/no-non-null-assertion */
       id: updatedData!.id,
       guild: updatedData!.guild as string,
       registered: updatedData!.registered,

@@ -1,0 +1,8 @@
+build/
+build/
+*.json
+test/
+data/
+.npmrc
+beta.config/
+node_modules/

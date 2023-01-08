@@ -1,11 +1,13 @@
 {
   "name": "@eazyautodelete/db-client",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "Database client used by the EazyAutodelete Discord Bot,",
   "main": "build/index.js",
   "scripts": {
     "test": "npm run test",
-    "format": "npx prettier --write ."
+    "format": "npx prettier --write .",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "files": [
     "build/*.js",
@@ -40,7 +42,10 @@
   "devDependencies": {
     "@types/ioredis": "^4.28.10",
     "@types/mongoose": "^5.11.97",
+    "@typescript-eslint/eslint-plugin": "^5.48.0",
+    "@typescript-eslint/parser": "^5.48.0",
     "commitizen": "^4.2.5",
+    "eslint": "^8.31.0",
     "prettier": "^2.6.1",
     "standard-version": "^9.5.0"
   },
